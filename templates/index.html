@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" rel="stylesheet" type='text/css'>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.16.0/mapbox-gl.css' rel='stylesheet' />
+    <script type="text/javascript" src="../js/mapbox-gl.js" charset="utf-8"></script>
+    <title>Visualization</title>
+
+</head>
+
+<body>
+    <div id="map" style="position: absolute; top: 0; bottom: 0; width: 100%;"></div>
+    <script type="text/javascript" charset="utf-8">
+        mapboxgl.accessToken =
+            'pk.eyJ1IjoiZ3JlYXRyYWRhIiwiYSI6ImNqYW9iaDM0ZTBmZXAyeG1paW12MzM4MnAifQ.Lz_wF3srdlOYOJBvwWT5VA';
+        var map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/streets-v8',
+            center: [-77.154, 38.899], //[-81.660895, 30.325941],
+            zoom: 9,
+            attributionControl: true
+        });
+
+        var vehicles = {
+            "type": "geojson",
+            "data": {
+                "type": "FeatureCollection",
+                "features": []
+            }
+        };
+        var vehiclesPositions = {
+            "type": "FeatureCollection",
+            "features": [{
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [-76.93238901390978, 38.913188059745586]
+                },
+                "properties": {
+                    "title": "Bicycle",
+                    "marker-symbol": "bicycle",
+                    "nextPosition": [-76.83238901390978, 38.813188059745586]
+                }
+            }, {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [-77.13238901390978, 38.813188059745586]
+                },
+                "properties": {
+                    "icon": {
+                        'iconUrl': 'https://www.mapbox.com/mapbox.js/assets/images/astronaut2.png',
+                        'iconSize': [50, 50], // size of the icon
+                        'iconAnchor': [25, 25], // point of the icon which will correspond to marker's location
+                        'popupAnchor': [0, -25], // point from which the popup should open relative to the iconAnchor
+                        'className': 'dot'
+                    },
+                    "nextPosition": [-76.97238901390978, 38.973188059745586]
+                }
+            }]
+        };
+
+        vehicles["data"]["features"] = [];
+
+
+        map.on('style.load', function () {
+
+            map.addSource("vehicles", vehicles);
+
+            map.addLayer({
+                "id": "vehicles",
+                "type": "symbol",
+                "source": "vehicles",
+                "layout": {
+                    "icon-image": "{marker-symbol}-15",
+                    "text-field": "{title}",
+                    "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"],
+                    "text-offset": [0, 1.1],
+                    "text-anchor": "top",
+                    "text-size": 10,
+                    "icon-allow-overlap": true,
+                    "icon-ignore-placement": true,
+                    "text-allow-overlap": true,
+                    "text-optional": true,
+                }
+            });
+            vehicles["data"]["features"] = vehiclesPositions.features;
+            map.getSource('vehicles').setData(vehicles.data); //markers will animate
+            map.getSource('vehicles').animate(1000); //To activate animation for this source with a delay of 1000ms
+        })
+    </script>
+</body>
+
+</html>
