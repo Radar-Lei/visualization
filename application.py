@@ -3,6 +3,7 @@ import requests
 import json
 from flask import Flask, jsonify, render_template, request
 from flask_socketio import SocketIO, emit
+import time
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
@@ -12,12 +13,13 @@ with open('C:\\Users\\greatraid\\Desktop\\test.json') as json_file:
     data = json.load(json_file)
     trace_data = list(data["data"])
     vehicle_n = len(trace_data)
+    tick_len = len(trace_data[0]['ROAD_LINE'].split(';'))
 
 
 def newPostion(trace_data, timestamp):
     newposition = []
-    print(timestamp)
-    print(type(timestamp))
+    # print(timestamp)
+    # print(type(timestamp))
     for i in range(len(trace_data)):
         ls = trace_data[i]['ROAD_LINE'].split(';')
         point = ls[timestamp].split(',')
@@ -32,10 +34,7 @@ def index():
 
 @socketio.on("request data")
 def get():
-    emit("initial", {"trace": newPostion(trace_data, 0),
-                     "vehicle_n": vehicle_n}, broadcast=True)
-
-
-@socketio.on("newPosition")
-def newData(data):
-    emit("sending", {"trace": newPostion(trace_data, data["timestamp"])})
+    for i in range(tick_len):
+        print(i)
+        emit("sending", {"trace": newPostion(trace_data, i)})
+        socketio.sleep(1)
