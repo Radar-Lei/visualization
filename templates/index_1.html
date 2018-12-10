@@ -43,7 +43,7 @@
         }
         var time_tick = 0
 
-        points = turf.randomPoint(193, {
+        points = turf.randomPoint(202, {
             bbox: [-80, 30, -50, 70]
         })
 
@@ -114,9 +114,10 @@
                     newFeatures.features.push(newPoint)
                 };
                 points = newFeatures;
-                map.getSource('point').setData(points);
+                console.log(points)
+                //map.getSource('point').setData(points);
             });
-            
+
         })
     </script>
 </body>

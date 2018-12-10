@@ -27,6 +27,9 @@ def newPostion(trace_data, timestamp):
     return newposition
 
 
+thread = None
+
+
 @app.route("/")
 def index():
     return render_template("index_1.html")
@@ -34,6 +37,12 @@ def index():
 
 @socketio.on("request data")
 def get():
+    global thread
+    if thread is None:
+        thread = socketio.start_background_task(target=background_sending)
+
+
+def background_sending():
     for i in range(tick_len):
         print(i)
         emit("sending", {"trace": newPostion(trace_data, i)})
