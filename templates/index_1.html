@@ -5,9 +5,10 @@
     <meta charset='utf-8' />
     <title></title>
     <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
-    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.js'></script>
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.51.0/mapbox-gl.js'></script>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.51.0/mapbox-gl.css' rel='stylesheet' />
     <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
-    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.css' rel='stylesheet' />
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
     <style>
         body {
             margin: 0;
@@ -31,8 +32,8 @@
         var map = new mapboxgl.Map({
             container: 'map',
             style: 'mapbox://styles/mapbox/streets-v10?optimize=true',
-            center: [-65, 30],
-            zoom: 1
+            center: [-81.660895, 30.325941],
+            zoom: 8
         });
 
         var icontypes = {
@@ -41,117 +42,106 @@
             "2": "bus-15"
         }
 
-        var numAssets = 300
-        var previousTimestamp = 0
-        var points = turf.randomPoint(numAssets, {
-            bbox: [-80, 30, -50, 70]
-        });
+        var count = 0
 
+        function newPosition(timestamp, socket, points) {
 
-        function getRandomArbitrary(min, max) {
-            return Math.floor(Math.random() * (max - min)) + min;
-        }
-
-        function getRandomIntInclusive(min, max) {
-            min = Math.ceil(min);
-            max = Math.floor(max);
-            return Math.floor(Math.random() * (max - min + 1)) + min;
-        }
-
-        points.features.forEach(function (f) {
-            f.properties.icon_rotate = 0
-            f.properties.icon_type = icontypes[getRandomIntInclusive(0, 2).toString()]
-        });
-
-        function newPosition(timestamp) {
-
-            var newFeatures = {
-                "type": "FeatureCollection",
-                "features": []
-            }
-
-            var changeicon = false
-
-            if ((timestamp % 2000 == 0) && (timestamp != previousTimestamp)) {
-                previousTimestamp = timestamp
-                changeicon = true
-            }
-
-            // Randomly generate new point locations.  These would be all responses from asset updates.
-            points.features.forEach(function (f) {
-                var newcoords = [(f.geometry.coordinates[0] + getRandomArbitrary(-0.2, 0.2)),
-                    (f.geometry.coordinates[1] + getRandomArbitrary(-0.2, 0.2))
-                ]
-                var newPoint = turf.point(newcoords)
-
-                //Calculate rotation from previous state to new state
-                newPoint.properties.icon_rotate = turf.bearing(f, newPoint)
-
-                //Calculate asset icon
-                if (changeicon) {
-                    //Change the asset icon every 2 seconds
-                    newPoint.properties.icon_type = icontypes[getRandomIntInclusive(0, 2).toString()]
-                } else {
-                    newPoint.properties.icon_type = f.properties.icon_type
-                }
-
-                newFeatures.features.push(newPoint)
+            socket.emit('newPosition', {
+                "timestamp": count
             });
 
-            points = newFeatures;
+            socket.on('sending', newdata => {
 
+                var newFeatures = {
+                    "type": "FeatureCollection",
+                    "features": []
+                }
+
+                // generate new point locations.
+                points.features.forEach(newP);
+
+                function newP(f, index) {
+                    var newcoords = [newdata.trace[index][0], newdata.trace[index][1]]
+
+                    var newPoint = turf.point(newcoords)
+                    //Calculate rotation from previous state to new state
+                    newPoint.properties.icon_rotate = turf.bearing(f, newPoint)
+
+                    newFeatures.features.push(newPoint)
+                };
+                points = newFeatures;
+                count = count + 1
+
+            })
         }
 
         map.on('style.load', function () {
 
-            // Add a source and layer displaying a point which will be animated in a circle.
-            map.addSource('point', {
-                "type": "geojson",
-                "data": points,
-                buffer: 5,
-                maxzoom: 10
-            });
+            var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port);
 
-            map.addLayer({
-                "id": "point",
-                "source": "point",
-                "type": "symbol",
-                "layout": {
-                    //Control the icon image using data-driven styles
-                    "icon-image": {
-                        "property": "icon_type",
-                        "type": "identity"
-                    },
-                    "icon-size": {
-                        //Control the icon-size based on zoom level
-                        "stops": [
-                            [0, 0.5],
-                            [7, 2]
-                        ]
-                    },
-                    "icon-allow-overlap": true,
-                    // Control the icon rotation with data driven styles
-                    "icon-rotate": {
-                        "property": "icon_rotate",
-                        "type": "identity"
+            socket.on('connect', () => {
+                // Add a source and layer displaying a point which will be animated in a circle.
+
+                socket.emit('request data');
+                socket.on('initial', data => {
+
+                    var time_tick = 0
+
+                    var points = turf.randomPoint(data.vehicle_n)
+
+                    points.features.forEach(function (f) {
+                        f.properties.icon_rotate = 0
+                        f.properties.icon_type = icontypes[0]
+                    });
+
+                    map.addSource('point', {
+                        "type": "geojson",
+                        "data": points,
+                        buffer: 5,
+                        maxzoom: 10
+                    });
+
+                    map.addLayer({
+                        "id": "point",
+                        "source": "point",
+                        "type": "symbol",
+                        "layout": {
+                            //Control the icon image using data-driven styles
+                            "icon-image": {
+                                "property": "icon_type",
+                                "type": "identity"
+                            },
+                            "icon-size": {
+                                //Control the icon-size based on zoom level
+                                "stops": [
+                                    [0, 0.5],
+                                    [7, 2]
+                                ]
+                            },
+                            "icon-allow-overlap": true,
+                            // Control the icon rotation with data driven styles
+                            "icon-rotate": {
+                                "property": "icon_rotate",
+                                "type": "identity"
+                            }
+                        }
+                    });
+
+
+                    function animateMarker(timestamp) {
+                        // Update the data to a new position based on the animation timestamp. The
+                        // divisor in the expression `timestamp / 1000` controls the animation speed.
+
+                        newPosition(timestamp / 1000, socket, points);
+
+                        map.getSource('point').setData(points);
+                        // Request the next frame of the animation.
+                        requestAnimationFrame(animateMarker);
                     }
-                }
-            });
-
-
-            function animateMarker(timestamp) {
-                // Update the data to a new position based on the animation timestamp. The
-                // divisor in the expression `timestamp / 1000` controls the animation speed.
-
-                newPosition(timestamp / 1000);
-
-                map.getSource('point').setData(points);
-                // Request the next frame of the animation.
-                requestAnimationFrame(animateMarker);
-            }
-
-            // Start the animation.
-            animateMarker(0);
+                    // Start the animation.
+                    animateMarker(0);
+                })
+            })
         })
     </script>
 </body>

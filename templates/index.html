@@ -31,32 +31,30 @@
                 "features": []
             }
         };
-        var vehiclesPositions = {
-            "type": "FeatureCollection",
-            "features": [{
-                "type": "Feature",
-                "geometry": {
-                    "type": "Point",
-                    "coordinates": [-76.93238901390978, 38.913188059745586]
-                },
-                "properties": {
-                    "title": "Bicycle",
-                    "marker-symbol": "bicycle",
-                    "nextPosition": [-76.83238901390978, 38.813188059745586]
-                }
-            }, {
-                "type": "Feature",
-                "geometry": {
-                    "type": "Point",
-                    "coordinates": [-77.13238901390978, 38.813188059745586]
-                },
-                "properties": {
-                    "title": "Car",
-                    "marker-symbol": "rocket",
-                    "nextPosition": [-76.97238901390978, 38.973188059745586]
-                }
-            }]
-        };
+
+        var features = [{
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [-76.93238901390978, 38.913188059745586]
+            },
+            "properties": {
+                "title": "Bicycle",
+                "marker-symbol": "bicycle",
+                "nextPosition": [-76.83238901390978, 38.813188059745586]
+            }
+        }, {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [-77.13238901390978, 38.813188059745586]
+            },
+            "properties": {
+                "title": "Car",
+                "marker-symbol": "rocket",
+                "nextPosition": [-76.97238901390978, 38.973188059745586]
+            }
+        }]
 
         vehicles["data"]["features"] = [];
 
@@ -82,7 +80,7 @@
                     "text-optional": true,
                 }
             });
-            vehicles["data"]["features"] = vehiclesPositions.features;
+            vehicles["data"]["features"] = features;
             map.getSource('vehicles').setData(vehicles.data); //markers will animate
             map.getSource('vehicles').animate(1000); //To activate animation for this source with a delay of 1000ms
         })
