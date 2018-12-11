@@ -24,8 +24,6 @@ with open('C:\\Users\\greatraid\\Desktop\\test.json') as json_file:
 
 def newPostion(trace_data, timestamp):
     newposition = []
-    # print(timestamp)
-    # print(type(timestamp))
     for i in range(len(trace_data)):
         ls = trace_data[i]['ROAD_LINE'].split(';')
         point = ls[timestamp].split(',')
@@ -34,7 +32,6 @@ def newPostion(trace_data, timestamp):
 
 
 def background_generator():
-    """Example of how to send server generated events to clients."""
     while True:
         for i in range(tick_len):
             socketio.sleep(0.001)
