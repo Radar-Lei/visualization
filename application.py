@@ -39,3 +39,5 @@ def get():
 @socketio.on("newPosition")
 def newData(data):
     emit("sending", {"trace": newPostion(trace_data, data["timestamp"])})
+
+    
