@@ -1,84 +1,25 @@
 import os
 import requests
 import json
-from flask import Flask, jsonify, render_template, request, url_for, copy_current_request_context
-from flask_socketio import SocketIO, emit
-from time import sleep
-from threading import Thread, Event
+from flask import Flask, jsonify, render_template, request, session
+from flask_socketio import SocketIO, emit, disconnect
+import time
+from threading import Lock
+import eventlet
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
+async_mode = None
+socketio = SocketIO(app, async_mode=async_mode)
 
+thread = None
+thread_lock = Lock()
 
 with open('C:\\Users\\greatraid\\Desktop\\test.json') as json_file:
     data = json.load(json_file)
     trace_data = list(data["data"])
     vehicle_n = len(trace_data)
     tick_len = len(trace_data[0]['ROAD_LINE'].split(';'))
-
-# turn the flask app into a socketio app
-socketio = SocketIO(app)
-
-# random number Generator Thread
-thread = Thread()
-thread_stop_event = Event()
-
-
-class RandomThread(Thread):
-    def __init__(self):
-        self.delay = 1
-        super(RandomThread, self).__init__()
-
-    def randomNumberGenerator(self):
-        """
-        Generate a random number every 1 second and emit to a socketio instance (broadcast)
-        Ideally to be run in a separate thread?
-        """
-        # infinite loop of magical random numbers
-        print("Making random numbers")
-        for i in range(tick_len):
-            print(i)
-            emit("sending", {"trace": newPostion(trace_data, i)})
-            socketio.sleep(1)
-
-        """
-        while not thread_stop_event.isSet():
-            number = round(random()*10, 3)
-            print(number)
-            socketio.emit('newnumber', {'number': number}, namespace='/test')
-            sleep(self.delay)
-"""
-
-    def run(self):
-        self.randomNumberGenerator()
-
-
-@app.route('/')
-def index():
-    # only by sending this page first will the client be connected to the socketio instance
-    return render_template('index.html')
-
-
-@socketio.on('connect', namespace='/test')
-def test_connect():
-    # need visibility of the global thread object
-    global thread
-    print('Client connected')
-
-    # Start the random number generator thread only if the thread has not been started before.
-    if not thread.isAlive():
-        print("Starting Thread")
-        thread = RandomThread()
-        thread.start()
-
-
-@socketio.on('disconnect', namespace='/test')
-def test_disconnect():
-    print('Client disconnected')
-
-
-if __name__ == '__main__':
-    socketio.run(app)
 
 
 def newPostion(trace_data, timestamp):
@@ -92,16 +33,28 @@ def newPostion(trace_data, timestamp):
     return newposition
 
 
-thread = None
+def background_generator():
+    """Example of how to send server generated events to clients."""
+    while True:
+        for i in range(tick_len):
+            socketio.sleep(0.001)
+            newposition = []
+            for j in range(len(trace_data)):
+                ls = trace_data[j]['ROAD_LINE'].split(';')
+                point = ls[i].split(',')
+                newposition.append([float(point[0]), float(point[1])])
+            socketio.emit("sending", {"trace": newposition}, namespace='/test')
 
 
 @app.route("/")
 def index():
-    return render_template("index_1.html")
+    return render_template("index_1.html", async_mode=socketio.async_mode)
 
 
-@socketio.on("request data")
+@socketio.on('connect', namespace='/test')
 def get():
     global thread
-    if thread is None:
-        thread = socketio.start_background_task(target=background_sending)
+    with thread_lock:
+        if thread is None:
+            thread = socketio.start_background_task(
+                target=background_generator)

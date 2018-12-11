@@ -41,7 +41,6 @@
             "1": "airport-15",
             "2": "bus-15"
         }
-        var time_tick = 0
 
         points = turf.randomPoint(202, {
             bbox: [-80, 30, -50, 70]
@@ -86,14 +85,18 @@
                 }
             });
 
-            var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port);
+            namespace = '/test';
+
+            var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port +
+                namespace);
 
             socket.on('connect', () => {
                 socket.emit('request data');
             })
 
+            socket.on('sending', function (newdata) {
 
-            socket.on('sending', newdata => {
+                console.log("success")
 
                 var newFeatures = {
                     "type": "FeatureCollection",
@@ -110,12 +113,13 @@
                     var newPoint = turf.point(newcoords)
                     //Calculate rotation from previous state to new state
                     newPoint.properties.icon_rotate = turf.bearing(f, newPoint)
+                    newPoint.properties.icon_type = icontypes[0]
 
                     newFeatures.features.push(newPoint)
                 };
                 points = newFeatures;
                 console.log(points)
-                //map.getSource('point').setData(points);
+                map.getSource('point').setData(points);
             });
 
         })
