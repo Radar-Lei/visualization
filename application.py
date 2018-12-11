@@ -4,10 +4,13 @@ import json
 from flask import Flask, jsonify, render_template, request
 from flask_socketio import SocketIO, emit
 import time
+import eventlet
+eventlet.monkey_patch()
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
-socketio = SocketIO(app)
+async_mode = 'eventlet'
+socketio = SocketIO(app, async_mode=async_mode)
 
 with open('C:\\Users\\greatraid\\Desktop\\test.json') as json_file:
     data = json.load(json_file)
@@ -27,9 +30,6 @@ def newPostion(trace_data, timestamp):
     return newposition
 
 
-thread = None
-
-
 @app.route("/")
 def index():
     return render_template("index_1.html")
@@ -37,12 +37,6 @@ def index():
 
 @socketio.on("request data")
 def get():
-    global thread
-    if thread is None:
-        thread = socketio.start_background_task(target=background_sending)
-
-
-def background_sending():
     for i in range(tick_len):
         print(i)
         emit("sending", {"trace": newPostion(trace_data, i)})
