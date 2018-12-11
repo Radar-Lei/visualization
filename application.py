@@ -14,9 +14,9 @@ socketio = SocketIO(app, async_mode=async_mode)
 
 thread = None
 thread_lock = Lock()
-desktop = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop') 
+desktop = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
 
-with open(desktop+"\\test_sparse.json") as json_file:
+with open(desktop+"\\test.json") as json_file:
     data = json.load(json_file)
     trace_data = list(data["data"])
     vehicle_n = len(trace_data)
