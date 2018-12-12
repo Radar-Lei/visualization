@@ -37,7 +37,7 @@
         });
 
         var icontypes = {
-            "0": "rocket-15",
+            "0": "car-11",
             "1": "airport-15",
             "2": "bus-15"
         }
@@ -112,7 +112,7 @@
 
                     var newPoint = turf.point(newcoords)
                     //Calculate rotation from previous state to new state
-                    newPoint.properties.icon_rotate = turf.bearing(f, newPoint)
+                    //newPoint.properties.icon_rotate = turf.bearing(f, newPoint)
                     newPoint.properties.icon_type = icontypes[0]
 
                     newFeatures.features.push(newPoint)
@@ -125,5 +125,4 @@
         })
     </script>
 </body>
-
 </html>

@@ -35,7 +35,6 @@ def newPostion(trace_data, timestamp):
 
 
 def background_generator():
-    """Example of how to send server generated events to clients."""
     while True:
         for i in range(tick_len):
             socketio.sleep(0.001)
