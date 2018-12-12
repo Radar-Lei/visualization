@@ -6,42 +6,58 @@ from flask_socketio import SocketIO, emit, disconnect
 import time
 from threading import Lock
 import eventlet
+import numpy as np
+import pandas as pd
+
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
 async_mode = None
 socketio = SocketIO(app, async_mode=async_mode)
 
-thread = None
-thread_lock = Lock()
+
 desktop = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
 
 with open(desktop+"\\test.json") as json_file:
     data = json.load(json_file)
-    trace_data = list(data["data"])
+    trace_data = np.array(list(data["data"]))
     vehicle_n = len(trace_data)
     tick_len = len(trace_data[0]['ROAD_LINE'].split(';'))
 
+tick_applied = 60
 
-def newPostion(trace_data, timestamp):
-    newposition = []
-    for i in range(len(trace_data)):
-        ls = trace_data[i]['ROAD_LINE'].split(';')
-        point = ls[timestamp].split(',')
-        newposition.append([float(point[0]), float(point[1])])
-    return newposition
+n_sections = int(tick_len/tick_applied)
+
+
+def create_csv(vehicle_n):
+    final = []
+    for j in range(vehicle_n):
+        ls = np.array(trace_data[j]['ROAD_LINE'].split(';'))
+        a = np.array_split(ls, n_sections)  # inequally split array return list
+        final.append(a)
+    return final
+
+
+#ls = np.array(trace_data[0]['ROAD_LINE'].split(';'))
+#b = np.array_split(ls, n_sections)
+# print(np.array(b).shape)
+# print(ls)
+
+a = np.array(create_csv(vehicle_n))
+#c = a[:, 0]
+
+
+thread = None
+thread_lock = Lock()
 
 
 def background_generator():
     while True:
-        for i in range(tick_len):
-            socketio.sleep(0.001)
-            newposition = []
-            for j in range(len(trace_data)):
-                ls = trace_data[j]['ROAD_LINE'].split(';')
-                point = ls[i].split(',')
-                newposition.append([float(point[0]), float(point[1])])
-            socketio.emit("sending", {"trace": newposition}, namespace='/test')
+        for i in range(n_sections):
+            socketio.sleep(5)
+            points = a[:, i]
+            socketio.emit("sending", {"trace": pd.Series(points).to_json(orient='values'), "section_length": len(
+                points[0])}, namespace='/test')
 
 
 @app.route("/")
