@@ -128,18 +128,16 @@
                 section_length = newdata.section_length;
 
                 var count = 0;
+                setInterval(anim, 100);
 
-                function anim(timestamp) {
-
+                function anim() {
                     points_generation(count, newdata);
-
                     map.getSource('point').setData(points);
                     if (count < section_length - 1) {
                         requestAnimationFrame(anim)
                     }
                     count = count + 1;
                 }
-                anim();
             });
         })
     </script>
