@@ -24,7 +24,7 @@ with open(desktop+"\\test.json") as json_file:
     vehicle_n = len(trace_data)
     tick_len = len(trace_data[0]['ROAD_LINE'].split(';'))
 
-tick_applied = 60
+tick_applied = 10
 
 n_sections = int(tick_len/tick_applied)
 
@@ -44,8 +44,8 @@ def create_csv(vehicle_n):
 # print(ls)
 
 a = np.array(create_csv(vehicle_n))
-#c = a[:, 0]
-
+c = a[:, 0]
+print(len(c[0]))
 
 thread = None
 thread_lock = Lock()
@@ -54,7 +54,7 @@ thread_lock = Lock()
 def background_generator():
     while True:
         for i in range(n_sections):
-            socketio.sleep(5)
+            socketio.sleep(1)
             points = a[:, i]
             socketio.emit("sending", {"trace": pd.Series(points).to_json(orient='values'), "section_length": len(
                 points[0])}, namespace='/test')

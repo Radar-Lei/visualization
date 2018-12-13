@@ -71,7 +71,7 @@
 
                 var newPoint = turf.point(newcoords)
                 //Calculate rotation from previous state to new state
-                newPoint.properties.icon_rotate = turf.bearing(f, newPoint)
+                //newPoint.properties.icon_rotate = turf.bearing(f, newPoint)
                 newPoint.properties.icon_type = icontypes[0]
 
                 newFeatures.features.push(newPoint)
@@ -128,15 +128,14 @@
                 section_length = newdata.section_length;
 
                 var count = 0;
-                setInterval(anim, 100);
+                if (count < section_length - 1) {
+                    setInterval(anim, 500);
+                    count = count + 1;
+                }
 
                 function anim() {
                     points_generation(count, newdata);
                     map.getSource('point').setData(points);
-                    if (count < section_length - 1) {
-                        requestAnimationFrame(anim)
-                    }
-                    count = count + 1;
                 }
             });
         })
